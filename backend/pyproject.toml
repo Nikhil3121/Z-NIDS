@@ -1,0 +1,48 @@
+[project]
+name = "znids-backend"
+version = "1.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "C4", "SIM", "RUF"]
+ignore = [
+  "S101",   # assert in tests
+  "B008",   # FastAPI Depends/Query in defaults
+  "RUF001", "RUF002", "RUF003",  # intentional unicode (→, ×) in text
+  "S311",   # non-crypto RNG is fine for the synthetic generator
+  "SIM108",
+  "E501",   # line length handled by black-ish review; long SQL/format strings
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S108", "S603", "S607"]
+"app/cli/**" = ["S603"]
+
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+  "integration: needs PostgreSQL and Redis",
+  "slow: long-running ML tests",
+]
+filterwarnings = ["ignore::sklearn.exceptions.ConvergenceWarning"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+warn_unused_ignores = false
+check_untyped_defs = true
+exclude = ["alembic/", "tests/"]
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "alembic"]

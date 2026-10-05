@@ -1,0 +1,46 @@
+{
+  "version": "2026.09.2",
+  "description": "Maps alert categories to kill-chain stages and defines when alerts escalate to incidents.",
+  "stages": {
+    "port_scan": "discovery",
+    "brute_force": "credential_access",
+    "threat_intel_match": "initial_access",
+    "suspicious_port": "command_and_control",
+    "c2_beaconing": "command_and_control",
+    "dns_tunneling": "command_and_control",
+    "lateral_movement": "lateral_movement",
+    "exfiltration": "exfiltration",
+    "ddos": "impact",
+    "slow_dos": "impact",
+    "cleartext_protocol": "policy",
+    "unknown_anomaly": "unknown",
+    "behavioral_anomaly": "unknown",
+    "external_ids_alert": "unknown"
+  },
+  "stage_order": [
+    "discovery",
+    "initial_access",
+    "credential_access",
+    "command_and_control",
+    "lateral_movement",
+    "exfiltration",
+    "impact",
+    "unknown",
+    "policy"
+  ],
+  "rules": {
+    "single_alert_incident": {
+      "enabled": true,
+      "description": "A single alert opens an incident when it is critical; a potential unknown attack needs either very high risk or repeated occurrences (corroboration) to avoid one incident per stray anomaly.",
+      "min_severity": "critical",
+      "potential_unknown_min_risk": 65,
+      "potential_unknown_high_risk": 85,
+      "potential_unknown_min_occurrences": 3
+    },
+    "multi_stage_chain": {
+      "enabled": true,
+      "description": "Alerts from the same actor (or a host that was itself a victim) spanning >= min_stages distinct stages inside the correlation window form an attack chain.",
+      "min_stages": 2
+    }
+  }
+}

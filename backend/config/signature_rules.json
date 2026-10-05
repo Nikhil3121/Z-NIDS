@@ -1,0 +1,247 @@
+{
+  "version": "2026.09.2",
+  "description": "Z-NIDS signature rules. Thresholds live here, not in code. Conditions are evaluated against the flow's fields and its window features (see docs/ml-methodology.md for feature definitions). All conditions in `all` must hold; if `any` is present at least one must hold.",
+  "rules": [
+    {
+      "id": "SIG-SCAN-001",
+      "name": "Vertical port scan",
+      "category": "port_scan",
+      "severity": "high",
+      "enabled": true,
+      "description": "One source probed many distinct ports within 60s and most attempts were rejected or unanswered.",
+      "all": [
+        {
+          "field": "uniq_dst_ports_60",
+          "op": ">=",
+          "value": 30
+        },
+        {
+          "field": "failed_ratio_60",
+          "op": ">=",
+          "value": 0.6
+        }
+      ]
+    },
+    {
+      "id": "SIG-SCAN-002",
+      "name": "Host sweep",
+      "category": "port_scan",
+      "severity": "medium",
+      "enabled": true,
+      "description": "One source contacted many distinct hosts within 60s with a high failure ratio.",
+      "all": [
+        {
+          "field": "uniq_dst_ips_60",
+          "op": ">=",
+          "value": 30
+        },
+        {
+          "field": "failed_ratio_60",
+          "op": ">=",
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "id": "SIG-BRUTE-001",
+      "name": "Authentication brute force (remote access / mail / directory)",
+      "category": "brute_force",
+      "severity": "high",
+      "enabled": true,
+      "description": "Rapid repeated connections from one source to a single login service (SSH, Telnet, FTP, SMB, RDP, VNC, mail, LDAP).",
+      "all": [
+        {
+          "field": "dst_port",
+          "op": "in",
+          "value": [
+            21,
+            22,
+            23,
+            25,
+            110,
+            143,
+            389,
+            445,
+            3389,
+            5900
+          ]
+        },
+        {
+          "field": "same_port_ratio_60",
+          "op": ">=",
+          "value": 0.9
+        },
+        {
+          "field": "conn_count_60",
+          "op": ">=",
+          "value": 30
+        },
+        {
+          "field": "uniq_dst_ips_60",
+          "op": "<=",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "SIG-BRUTE-002",
+      "name": "Database authentication brute force from outside the network",
+      "category": "brute_force",
+      "severity": "high",
+      "enabled": true,
+      "description": "Rapid repeated connections from an external source to a database port. Internal application servers are excluded because connection pools produce the same pattern; internal database abuse is left to the anomaly and behavioural engines.",
+      "all": [
+        {
+          "field": "direction",
+          "op": "==",
+          "value": "inbound"
+        },
+        {
+          "field": "dst_port",
+          "op": "in",
+          "value": [
+            1433,
+            1521,
+            3306,
+            5432,
+            6379,
+            27017
+          ]
+        },
+        {
+          "field": "same_port_ratio_60",
+          "op": ">=",
+          "value": 0.9
+        },
+        {
+          "field": "conn_count_60",
+          "op": ">=",
+          "value": 30
+        },
+        {
+          "field": "uniq_dst_ips_60",
+          "op": "<=",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "SIG-DOS-001",
+      "name": "SYN flood against a single destination",
+      "category": "ddos",
+      "severity": "critical",
+      "enabled": true,
+      "description": "Very high rate of unanswered connection attempts from many sources to one destination.",
+      "all": [
+        {
+          "field": "dst_conn_count_60",
+          "op": ">=",
+          "value": 1500
+        },
+        {
+          "field": "dst_uniq_src_60",
+          "op": ">=",
+          "value": 20
+        },
+        {
+          "field": "failed",
+          "op": "==",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "SIG-DOS-002",
+      "name": "Request flood against a single destination",
+      "category": "ddos",
+      "severity": "high",
+      "enabled": true,
+      "description": "Extreme connection rate to one destination from many sources.",
+      "all": [
+        {
+          "field": "dst_conn_count_60",
+          "op": ">=",
+          "value": 3000
+        },
+        {
+          "field": "dst_uniq_src_60",
+          "op": ">=",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "SIG-ICMP-001",
+      "name": "ICMP flood",
+      "category": "ddos",
+      "severity": "medium",
+      "enabled": true,
+      "description": "High ICMP rate from one source.",
+      "all": [
+        {
+          "field": "protocol",
+          "op": "==",
+          "value": "icmp"
+        },
+        {
+          "field": "conn_count_10",
+          "op": ">=",
+          "value": 200
+        }
+      ]
+    },
+    {
+      "id": "SIG-PROTO-001",
+      "name": "Outbound connection to a commonly abused port",
+      "category": "suspicious_port",
+      "severity": "medium",
+      "enabled": true,
+      "description": "Internal host connected out on a port commonly associated with remote-access tooling.",
+      "all": [
+        {
+          "field": "direction",
+          "op": "==",
+          "value": "outbound"
+        },
+        {
+          "field": "dst_port",
+          "op": "in",
+          "value": [
+            1337,
+            4444,
+            5555,
+            6666,
+            6667,
+            12345,
+            31337
+          ]
+        },
+        {
+          "field": "failed",
+          "op": "==",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "SIG-PROTO-002",
+      "name": "Cleartext remote administration (Telnet)",
+      "category": "cleartext_protocol",
+      "severity": "low",
+      "enabled": true,
+      "description": "A Telnet session was established; credentials travel in cleartext.",
+      "all": [
+        {
+          "field": "dst_port",
+          "op": "==",
+          "value": 23
+        },
+        {
+          "field": "failed",
+          "op": "==",
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

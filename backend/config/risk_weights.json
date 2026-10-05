@@ -1,0 +1,18 @@
+{
+  "version": "2026.09.1",
+  "description": "Risk = 100 x detection_strength x context. detection_strength = 1 - prod(1 - trust_i * component_i/100) over detection components (noisy-OR: independent evidence reinforces). context = min(1, base + asset_criticality_weight * asset/100 + correlation_weight * correlation/100).",
+  "trust": {
+    "signature": 0.95,
+    "anomaly": 0.85,
+    "behavioral": 0.70,
+    "threat_intel": 0.85
+  },
+  "context": {
+    "base": 0.70,
+    "asset_criticality": 0.25,
+    "correlation": 0.10
+  },
+  "unknown_asset_criticality": 50,
+  "severity_component": {"critical": 100, "high": 85, "medium": 60, "low": 35, "info": 10},
+  "behavioral": {"z_threshold": 3.0, "min_ratio": 2.0, "scale": 5.0, "strong_component": 60}
+}
